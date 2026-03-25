@@ -1682,16 +1682,29 @@ Narrative: ${STATE.b2Narrative||'Không có'}
 Đòn bẩy đang dùng: ${leverage}x
 Daily loss: $${loss} | ${lotNote}
 
-QUY TẮC BẮT BUỘC — KHÔNG NGOẠI LỆ:
-- SL tối đa: $300 (300 points) — nếu cần SL rộng hơn → verdict = CANCEL
-- TP tối thiểu: $900 (để đạt R:R 1:3)
-- R:R tối thiểu: 1:3 — tính chính xác trước khi ra verdict
-- Nếu không tìm được entry có SL ≤ $300 VÀ TP ≥ $900 → verdict = CANCEL
-- Chỉ FIRE khi: cấu trúc M5 rõ + SL ≤ $300 + TP ≥ $900 + R:R ≥ 1:3
+CHECKLIST SMC BẮT BUỘC — phải đủ CẢ 3 điều kiện mới được FIRE:
+
+✅ ĐIỀU KIỆN 1 — LIQUIDITY SWEEP:
+- Giá đã quét qua Buy Side Liquidity (BSL) hoặc Sell Side Liquidity (SSL) rõ ràng
+- Nếu chưa sweep → verdict = WAIT, không ngoại lệ
+
+✅ ĐIỀU KIỆN 2 — CHOCH (Change of Character):
+- Sau sweep phải có CHoCH xác nhận đảo chiều trên M5
+- Nếu chưa có CHoCH → verdict = WAIT
+
+✅ ĐIỀU KIỆN 3 — FVG hoặc OB:
+- Phải xác định được Fair Value Gap hoặc Order Block tại vùng retest
+- Entry PHẢI tại 50% của FVG hoặc 50% của OB
+- Nếu không có FVG/OB rõ ràng → verdict = WAIT
+
+QUY TẮC RISK BẮT BUỘC:
+- SL tối đa: $300 — nếu cần rộng hơn → verdict = CANCEL
+- TP tối thiểu: $900 (R:R 1:3)
+- Nếu không đạt SL ≤ $300 VÀ TP ≥ $900 → verdict = CANCEL
 
 QUAN TRỌNG: Trả lời HOÀN TOÀN bằng tiếng Việt, không dùng tiếng Anh.
 Trả về DUY NHẤT JSON:
-{"verdict":"FIRE"|"WAIT"|"CANCEL","verdict_reason":"...","order_type":"Long Limit/Short Limit/Long Stop/Short Stop","entry":"...","sl":"...","tp":"...","sl_points":"phải ≤ $300","tp_points":"phải ≥ $900","position_size":"contract size với risk 1-2%","rr":"X:Y — phải >= 1:3","liquidation_warning":"giá thanh lý ước tính với đòn bẩy","structure":"...","zone":"...","risk":"...","fail_reasons":"..."}`;
+{"verdict":"FIRE"|"WAIT"|"CANCEL","verdict_reason":"...","sweep":"Đã sweep BSL/SSL tại giá X chưa — MÔ TẢ CỤ THỂ","choch":"Đã có CHoCH tại giá X chưa — MÔ TẢ CỤ THỂ","fvg_ob":"FVG/OB tại vùng X-Y, entry tại 50% = Z — MÔ TẢ CỤ THỂ","order_type":"Long Limit/Short Limit/Long Stop/Short Stop","entry":"50% của FVG/OB","sl":"...","tp":"...","sl_points":"phải ≤ $300","tp_points":"phải ≥ $900","position_size":"contract size với risk 1-2%","rr":"X:Y — phải >= 1:3","liquidation_warning":"giá thanh lý ước tính với đòn bẩy","fail_reasons":["Lý do 1","Lý do 2","Lý do 3"]}`;
     const b64=STATE.imgs.b4_m5.split(',')[1];
     const mtype=STATE.imgs.b4_m5.split(';')[0].split(':')[1];
     const r=await callAPI({model:'claude-sonnet-4-20250514',max_tokens:1000,system:sys,messages:[{role:'user',content:[{type:'image',source:{type:'base64',media_type:mtype,data:b64}},{type:'text',text:'Chart M5 BTCUSDT. Phân tích JSON.'}]}]});
